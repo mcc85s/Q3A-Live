@@ -653,10 +653,11 @@ Class Q3ALiveMaster
             $Writer   = [System.IO.File]::AppendText($This.Workspace.Log)
             $Writer.WriteLine($LogEntry)
             $Writer.Dispose()
-            [Console]::WriteLine("----")
-            [Console]::WriteLine($This.Workspace.LogHeader)
+            [Console]::WriteLine("")
+            [Console]::WriteLine($This.Workspace.LogHeader())
+            [Console]::WriteLine("----       ----     ----                             ------")
             [Console]::WriteLine($LogEntry)
-            [Console]::WriteLine("----")
+            [Console]::WriteLine("")
         }
 
         $This.WriteStatus(5)
