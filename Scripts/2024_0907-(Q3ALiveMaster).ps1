@@ -1618,16 +1618,19 @@ Class Q3ALiveMaster
         # // Transfer the map asset package to the [Quake Live] directory
         [Console]::WriteLine("Transferring [~] Package -> [Quake Live] directory")
 
-        $Destination = "{0}\{1}" -f $This.Live().Base, ($This.Map.Target | Split-Path -Leaf)
-
-        If ([System.IO.File]::Exists($Destination))
+        ForEach ($Item in $This.Q3A().Base, $This.Live().Base)
         {
-            [System.IO.File]::Delete($Destination)
+            $Destination = "{0}\{1}" -f $Item, ($This.Map.Target | Split-Path -Leaf)
+
+            If ([System.IO.File]::Exists($Destination))
+            {
+                [System.IO.File]::Delete($Destination)
+            }
+
+            [System.IO.File]::Copy($This.Map.Target,$Destination)
+
+            [Console]::WriteLine("Transferred [+] Package: [$Destination]")
         }
-
-        [System.IO.File]::Copy($This.Map.Target,$Destination)
-
-        [Console]::WriteLine("Transferred [+] Package: [$Destination]")
 
         $This.WriteStatus(6)
     }
@@ -1697,47 +1700,437 @@ Then, you'd be doing your friends a real favor.
 
 $Radiant   = "C:\Games\GtkRadiant"
 $Workspace = "C:\Workspace"
-$MapName   = "rtcq"
+$MapName   = "insaneproducts"
 $Steam     = "C:\Games\steam"
 $Workshop  = "$Steam\Workshop"
 
 $Ctrl      = [Q3ALiveMaster]::New()
-$Ctrl.SetRadiant($Radiant)
-$Ctrl.SetWorkspace($Workspace)
-$Ctrl.SetMap($MapName)
-$Ctrl.SetSteam($Steam)
-$Ctrl.Steam.SetWorkshop($Workshop)
+$Ctrl.SetRadiant($Radiant)         # <- Assigns the path to radiant + compilation tools
+$Ctrl.SetWorkspace($Workspace)     # <- Assigns a separate path for all map projects each containing their own assets
 
-# $Ctrl.Steam.RemoveProject($Ctrl.Map.Name)
-$Ctrl.Steam.Project
-$Ctrl.Steam.CreateProject($Ctrl.Map.Name)
+$Ctrl.SetMap($MapName)             # <- Assigns the map name, and will build folders for map assets to be packaged
+$Ctrl.SetSteam($Steam)             # <- Assigns the path to steamcmd installation
+$Ctrl.Steam.SetWorkshop($Workshop) # <- Assigns the path to Steam Workshop projects
 
-$Selection = $Ctrl.Steam.Project | ? Name -match $MapName
-$Ctrl.Steam.SetSelection($Selection.Index)
-$Current = $Ctrl.Steam.Current()
-$Current.Populate()
+$Remove = 0 # <- Prevents this little block from running
+If ($Remove -eq 1)
+{
+    $Ctrl.Steam.RemoveProject($Ctrl.Map.Name)
+}
 
-# [Levelshot/Preview
-$Levelshot = $Ctrl.Map.Output | ? Fullname -match levelshots\\.+
-$Current.SetPreview($Levelshot.Fullname)
+# $Ctrl.Steam.Project <- Shows available projects in the Steam Workshop
+$Create = 0 # <- Prevents this little block from running
+If ($Create -eq 1)
+{
+    $Ctrl.Steam.CreateProject($Ctrl.Map.Name)
+}
+
+$Select = 0 # <- Prevents this little block from running
+If ($Select -eq 1)
+{
+    $Selection = $Ctrl.Steam.Project | ? Name -match $MapName
+    $Ctrl.Steam.SetSelection($Selection.Index)
+    $Current = $Ctrl.Steam.Current()
+    $Current.Populate()
+}
+
+$Preview = 0  # <- Prevents this little block from running
+If ($Preview -eq 1)
+{
+    $Levelshot = $Ctrl.Map.Output | ? Fullname -match levelshots\\.+
+    $Current.SetPreview($Levelshot.Fullname)
+}
 
 # $Current.Preview
 # $Current.Preview.Check()
 
-$Vdf                = @{ 
-    AppId           = 282440
-    PublishedFileId = 0
-    ContentFolder   = $Current.ContentPath()
-    PreviewFile     = $Current.Preview.Fullname
-    Visibility      = 0
-    Title           = "Return to Castle: Quake"
-    Description     = "Evil7 texture set castle shooter for duel"
-    ChangeNote      = "Beta release v0.1"
+$Vdf = 0  # <- Prevents this little block from running
+If ($Vdf -eq 1)
+{
+    $xVdf               = @{ 
+        AppId           = 282440
+        PublishedFileId = 0
+        ContentFolder   = $Current.ContentPath()
+        PreviewFile     = $Current.Preview.Fullname
+        Visibility      = 0
+        Title           = "Insane Products"
+        Description     = "An update to: https://lvlworld.com/review/id:1850"
+        ChangeNote      = "Alpha v0.0"
+    }
+
+    $Current.SetVdf($xVdf)
 }
 
-$Current.SetVdf($Vdf)
+$Pk3 = 0
+If ($Pk3 -eq 1)
+{
+    $xPk3                = $Ctrl.Map.Target
+    $Current.SetPk3($xPk3)
+}
 
-$Pk3                = $Ctrl.Map.Target
-$Current.SetPk3($Pk3)
+$Upload = 0
+If ($Upload -eq 1)
+{
+    $Ctrl.Steam.UploadProject()
+}
 
-$Ctrl.Steam.UploadProject()
+<# [insaneproducts.arena]
+$Arena = @'
+{
+map "insaneproducts"
+longname "Insane Products"
+type "ffa duel"
+}
+'@
+
+$Ctrl.SetArena($Arena)
+$Ctrl.Map.Arena.SetContent()
+#>
+
+<# [insaneproducts.shader]
+
+$Shader = @'
+textures/insaneproducts/tssfx1
+{
+	qer_editorimage textures/insaneproducts/tssfx1.tga
+	q3map_lightimage textures/insaneproducts/tssfxb1.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map textures/insaneproducts/tssfx1.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb1.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sawtooth .6 .1 0 7
+	}
+}
+
+textures/insaneproducts/tssfx2
+{
+	qer_editorimage textures/insaneproducts/tssfx2.tga
+	q3map_lightimage textures/insaneproducts/tssfxb2.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map textures/insaneproducts/tssfx2.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb2.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sawtooth .6 .1 0 7
+	}
+}
+
+textures/insaneproducts/tssfx3
+{
+	qer_editorimage textures/insaneproducts/tssfx3.tga
+	q3map_lightimage textures/insaneproducts/tssfxb3.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map textures/insaneproducts/tssfx3.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb3.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sawtooth .6 .1 0 7
+	}
+}
+
+textures/insaneproducts/tssfx4
+{
+	qer_editorimage textures/insaneproducts/tssfx4.tga
+	q3map_lightimage textures/insaneproducts/tssfxb4.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map textures/insaneproducts/tssfx4.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb4.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sawtooth .6 .1 0 7
+	}
+}
+
+textures/insaneproducts/tssfx5
+{
+	qer_editorimage textures/insaneproducts/tssfx5.tga
+	q3map_lightimage textures/insaneproducts/tssfxb5.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map textures/insaneproducts/tssfx5.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb5.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sawtooth .6 .1 0 7
+	}
+}
+
+textures/insaneproducts/tssfx6
+{
+	qer_editorimage textures/insaneproducts/tssfx6.tga
+	q3map_lightimage textures/insaneproducts/tssfxb6.tga
+	q3map_surfacelight 300
+	surfaceparm nomarks
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfx6.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb6.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sin .3 .1 0 0.5
+	}
+}
+
+textures/insaneproducts/tssfx7
+{
+	qer_editorimage textures/insaneproducts/tssfx7.tga
+	q3map_lightimage textures/insaneproducts/tssfxb7.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfx7.tga
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb7.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sin .3 .1 0 0.5
+	}
+}
+
+textures/insaneproducts/tssfx8
+{
+	qer_editorimage textures/insaneproducts/tssfx8.tga
+	q3map_lightimage textures/insaneproducts/tssfxb8.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map textures/insaneproducts/tssfx8.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb8.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sawtooth .6 .1 0 7
+	}
+}
+
+textures/insaneproducts/tssfx9
+{
+	qer_editorimage textures/insaneproducts/tssfx9.tga
+	q3map_lightimage textures/insaneproducts/tssfxb9.tga
+	q3map_surfacelight 750
+	surfaceparm nomarks
+	{
+		map textures/insaneproducts/tssfx9.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		blendFunc GL_DST_COLOR GL_ZERO
+		rgbGen identity
+	}
+	{
+		map textures/insaneproducts/tssfxb9.tga
+		blendfunc GL_ONE GL_ONE
+		rgbGen wave sawtooth .6 .1 0 7
+	}
+}
+
+textures/insaneproducts/tssfx10
+{
+	qer_editorimage textures/insaneproducts/tssfx10.tga
+	q3map_lightimage textures/sfx/launchpad_blocks17.tga
+	{
+		map $lightmap
+		rgbGen identity
+	}
+	{ 
+		map textures/insaneproducts/tssfx10.tga
+		rgbGen identity
+		blendfunc gl_dst_color gl_zero
+	}
+	{	
+		map textures/insaneproducts/tssfx14.tga
+		blendfunc gl_one gl_one	
+		rgbgen wave inversesawtooth 0 1 0 1	
+	}
+	{	
+		map textures/insaneproducts/tssfx15.tga		
+		blendfunc gl_src_alpha gl_one	
+		tcmod scroll 0 2
+		rgbgen wave square 0 1 0 2
+		alphagen wave square 0 1 .1 2
+	}
+}
+
+textures/insaneproducts/tssfx11
+{
+	qer_editorimage textures/insaneproducts/tssfx11.tga
+	surfaceparm nodamage
+	q3map_lightimage textures/sfx/blocks11b_jumppad.tga
+	q3map_surfacelight 400
+	{
+		map textures/insaneproducts/tssfx11.tga
+		rgbGen identity
+	}
+	{
+		map $lightmap
+		rgbGen identity
+		blendfunc gl_dst_color gl_zero
+	}
+	{
+		map textures/insaneproducts/tssfx12.tga
+		blendfunc gl_one gl_one
+		rgbGen wave sin .5 .5 0 1.5	
+	}
+	{
+		clampmap textures/insaneproducts/tssfx13.tga
+		blendfunc gl_one gl_one
+		tcMod stretch sin 1.2 .8 0 1.5
+		rgbGen wave square .5 .5 .25 1.5
+	}
+}
+
+textures/insaneproducts/tssky
+{
+	qer_editorimage textures/insaneproducts/tssfx16.tga
+	q3map_lightimage textures/skies/pjbasesky.tga
+	surfaceparm noimpact
+	surfaceparm nomarks
+	surfaceparm nolightmap
+	surfaceparm sky
+	q3map_sun 2 3 2 90 315 60
+	q3map_surfacelight 80
+	skyparms - 512 -
+	{
+		map textures/insaneproducts/tssfx16.tga
+		tcMod scroll 0.05 .1
+		tcMod scale 2 2
+		depthWrite
+	}
+	{
+		map textures/insaneproducts/tssfx17.tga
+		blendfunc GL_ONE GL_ONE
+		tcMod scroll 0.05 0.06
+		tcMod scale 3 2
+	}
+}
+
+textures/insaneproducts/bfgslime
+{
+	qer_editorimage textures/liquids/slime7.tga
+	q3map_lightimage textures/liquids/slime7.tga
+	q3map_globaltexture
+	qer_trans .5
+
+	surfaceparm noimpact
+	surfaceparm slime
+	surfaceparm nolightmap
+	surfaceparm trans		
+
+	q3map_surfacelight 300
+	tessSize 32
+	cull disable
+
+	deformVertexes wave 100 sin 0 1 .5 .5
+
+	{
+		map textures/liquids/slime7c.tga
+		tcMod turb .3 .2 1 .05
+		tcMod scroll .01 .01
+	}
+	{
+		map textures/liquids/slime7.tga
+		blendfunc GL_ONE GL_ONE
+		tcMod turb .2 .1 1 .05
+		tcMod scale .5 .5
+		tcMod scroll .01 .01
+	}
+	{
+		map textures/liquids/bubbles.tga
+		blendfunc GL_ZERO GL_SRC_COLOR
+		tcMod turb .2 .1 .1 .2
+		tcMod scale .05 .05
+		tcMod scroll .001 .001
+	}		
+}
+
+textures/insaneproducts/tsrock
+{
+	qer_editorimage textures/stone/pjrock16.tga
+	q3map_lightimage textures/stone/pjrock16.tga
+ 	q3map_nonplanar
+ 	q3map_shadeangle 60
+ 	{
+ 		map $lightmap
+ 		rgbGen identity
+ 	}
+ 	{
+ 		map textures/stone/pjrock16.tga
+ 		blendFunc filter
+ 	}
+ }
+'@
+
+$Ctrl.SetShader($Shader)
+$Ctrl.Map.Shader.SetContent()
+#>
+
+$Ctrl.Compile()   # <- Compiles the map
+$Ctrl.Package()   # <- Creates an archive of the map
+$Ctrl.Transfer()  # <- Transfers the produced archive to Quake III Arena and Quake Live folders
+
+$Param = "+map {0} ffa" -f $Ctrl.Map.Name
+Start-Process -FilePath "steam://rungameid/282440//$Param"
