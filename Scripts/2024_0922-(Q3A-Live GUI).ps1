@@ -1,4 +1,4 @@
-Import-Module FightingEntropy
+Import-Module -Name FightingEntropy -Version 2024.1.0 -Force
 
 Class Q3ALiveXaml
 {
