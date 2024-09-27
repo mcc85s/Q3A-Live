@@ -2185,6 +2185,7 @@ Class SteamWorkshopProjectContent
     [String] $Name
     [String] $Fullname
     [UInt32] $Exists
+    [Object] $Length
     SteamWorkshopProjectContent([UInt32]$Index,[Object]$Object)
     {
         $This.Index    = $Index
@@ -2206,21 +2207,28 @@ Class SteamWorkshopProjectContent
     {
         Return [SteamWorkshopProjectContentLine]::New($Index,$Line)
     }
+    [Object] Q3ALiveByteSize([UInt64]$Bytes)
+    {
+        Return [Q3ALiveByteSize]::New("File",$Bytes)
+    }
     [String] DateFormat([DateTime]$Object)
     {
         Return $Object.ToString("MM/dd/yyyy HH:mm:ss")
     }
     Check()
     {
-        $Item          = Get-Item $This.Fullname -EA 0
-        $This.Exists   = !!$Item
-        If (!$Item)
+        $Object          = Get-Item $This.Fullname -EA 0
+        $This.Exists     = !!$Object
+        If (!$Object)
         {
-            $This.Date = "<not set>"
+            $This.Date   = "<not set>"
+            $This.Length = $This.Q3ALiveByteSize(0)
         }
-        If (!!$Item)
+        If (!!$Object)
         {
-            $This.Date = $This.DateFormat($Item.LastWriteTime)
+            $This.Date   = $This.DateFormat($Object.LastWriteTime)
+            $Bytes       = Switch ($This.Type) { Directory { 0 } Default { $Object.Length } }
+            $This.Length = $This.Q3ALiveByteSize($Bytes)
         }
     }
     [String] ToString()
@@ -4080,7 +4088,9 @@ Class Q3ALiveMaster
         $Current.Populate()
 
         # Details Header
-        $Ctrl.Reset($Ctrl.Xaml.IO.SteamWorkshopProjectDetailsHeader,$Current)
+        $Ctrl.Reset($Ctrl.Xaml.IO.SteamWorkshopProjectDetailsSelected,$Current)
+
+        $Ctrl.Xaml.IO.SteamWorkshopProjectRefresh.IsEnabled = 1
 
         # Details Body
         $Object = $Current.Vdf | Select-Object AppId, PublishedFileId, ContentFolder, PreviewFile, Visibility, Title, Description, ChangeNote
@@ -4145,7 +4155,8 @@ Class Q3ALiveMaster
         $Ctrl.Reset($Ctrl.Xaml.IO.SteamWorkshopProjectOutput,$Current.Content)
         $Ctrl.Xaml.IO.SteamWorkshopProjectOutput.IsEnabled      = 0
 
-        $Ctrl.Xaml.IO.SteamWorkshopProjectUpload.IsEnabled = [UInt32]($Current.Content.Count -ge 4)
+        $Ctrl.Xaml.IO.SteamWorkshopProjectUpload.IsEnabled    = [UInt32]($Current.Content.Count -ge 4)
+        $Ctrl.Xaml.IO.SteamWorkshopProjectReference.IsEnabled = [UInt32]($Current.Vdf.PublishedFileId -ne 0)
     }
     SteamWorkshopProjectVdfApply()
     {
@@ -4204,6 +4215,10 @@ Class Q3ALiveMaster
 
             $This.SteamWorkshopProject()
         }
+    }
+    SteamWorkshopProjectRefresh()
+    {
+        $This.SteamWorkshopProject()
     }
     SteamWorkshopProjectCreate()
     {
