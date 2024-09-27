@@ -1,3 +1,4 @@
+
 Import-Module -Name FightingEntropy -Version 2024.1.0 -Force
 
 Class Q3ALiveXaml
@@ -4231,10 +4232,11 @@ Class Q3ALiveMaster
         $Ctrl = $This
 
         $Ctrl.Steam.UploadProject()
+        $Ctrl.Xaml.IO.SteamWorkshopProjectReference.IsEnabled = 1
     }
     SteamWorkshopProjectReference()
     {
-        $ReferenceId = $This.Steam.Current().Vdf.PublishedFileId()
+        $ReferenceId = $This.Steam.Current().Vdf.PublishedFileId
 
         Start-Process -FilePath "https://steamcommunity.com/sharedfiles/filedetails/?id=$ReferenceId"
     }
