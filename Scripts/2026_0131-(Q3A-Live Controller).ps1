@@ -28,7 +28,7 @@
 # CSharp Type Definition
 Try
 {
-    $TypeDefinition =     'using System;',
+    $TypeDefinition = 'using System;',
     'using System.IO;',
     'using System.Collections.Generic;',
     'using System.Collections.ObjectModel;',
@@ -930,7 +930,7 @@ Try
     '    }',
     '}' -join "`n"
 
-    $AssemblyNames = ('mscorlib;System;System.Core;Microsoft.CSharp;WindowsBase;PresentationCore'+
+    $AssemblyNames = ('mscorlib;System;System.Core;Microsoft.CSharp;WindowsBase;PresentationCore;'+
                      'PresentationFramework;System.IO.Compression;System.IO.Compression.Filesystem') -Split ";"
                      
     Add-Type -ReferencedAssemblies $AssemblyNames -TypeDefinition $TypeDefinition
