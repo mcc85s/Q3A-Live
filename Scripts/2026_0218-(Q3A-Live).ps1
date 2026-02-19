@@ -35,7 +35,7 @@
 # CSharp Type Definition
 Try
 {
-    $TypeDefinition = [System.IO.File]::ReadAllLines("C:\files\2026_0211-(Q3A-Live).cs") -join "`n"
+    $TypeDefinition = [System.IO.File]::ReadAllLines("https://github.com/mcc85s/Q3A-Live/blob/main/Scripts/2026_0218-(Q3A-Live).cs") -join "`n"
     $Wpf            = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\WPF"
 
     $refs           = @(
@@ -73,7 +73,7 @@ Catch
 
 Class Q3ALiveXaml
 {
-    Static [String] $Content = [System.IO.File]::ReadAllLines("C:\Users\mcook\source\repos\DesignView\DesignView\Q3ALiveXaml.xaml") -join "`n"
+    Static [String] $Content = [System.IO.File]::ReadAllLines("https://github.com/mcc85s/Q3A-Live/blob/main/Scripts/2026_0218-(Q3A-Live).xaml") -join "`n"
 }
 
 Class XamlProperty
